@@ -1,0 +1,14 @@
+# Tema fixo em claro: os gráficos do matplotlib são desenhados sobre a
+# superfície clara #fcfcfb, com uma paleta escolhida e conferida contra
+# ESSA superfície. Deixar a interface seguir o tema do sistema operacional
+# colocaria figuras claras dentro de uma página escura.
+
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f6fa"
+textColor = "#0b0b0b"
+
+[browser]
+gatherUsageStats = false

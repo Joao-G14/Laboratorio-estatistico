@@ -1,0 +1,17 @@
+# Laboratório Estatístico Interativo — dependências
+#
+# streamlit  : interface web interativa (app.py)
+# pandas     : carga e manipulação do CSV (NUNCA o cálculo exibido)
+# matplotlib : gráficos (graficos.py)
+# numpy      : referência de validação nos testes e no painel do Módulo 1
+# scipy      : referência de validação (pearsonr, linregress, skew, pmf/pdf)
+# pytest     : execução da suíte de testes
+#
+# matplotlib >= 3.10 por causa de boxplot(orientation=...).
+
+streamlit>=1.40
+pandas>=2.0
+matplotlib>=3.10
+numpy>=1.26
+scipy>=1.11
+pytest>=8.0
