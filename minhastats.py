@@ -166,3 +166,68 @@ def coeficiente_variacao(dados, amostral=True, em_percentual=True):
     return cv * 100 if em_percentual else cv
 
 
+# ---------------------------------------------------------------------------
+# 3. Medidas de posição
+# ---------------------------------------------------------------------------
+
+
+def percentil(dados, p):
+    """Percentil p (0 a 100) por interpolação linear entre vizinhos.
+
+        posição = p · (n − 1) / 100        (índice real no vetor ordenado)
+        valor   = x[k] + f · (x[k+1] − x[k])
+
+    onde k é a parte inteira da posição e f a parte fracionária.
+
+    Existem pelo menos nove convenções de percentil na literatura; esta é
+    a mesma usada por `numpy.percentile` com o método padrão ("linear"),
+    escolhida justamente para que a validação seja direta e honesta.
+    """
+    _exigir_nao_vazio(dados)
+    if not 0 <= p <= 100:
+        raise ValueError("p deve estar entre 0 e 100")
+    ordenados = sorted(dados)
+    n = len(ordenados)
+    if n == 1:
+        return float(ordenados[0])
+    posicao = p * (n - 1) / 100.0
+    k = int(posicao)                    # parte inteira -> índice de baixo
+    fracao = posicao - k                # parte fracionária -> peso
+    if k + 1 >= n:                      # p = 100 cai exatamente no último
+        return float(ordenados[n - 1])
+    return ordenados[k] + fracao * (ordenados[k + 1] - ordenados[k])
+
+
+def quartis(dados):
+    """(Q1, Q2, Q3) — os percentis 25, 50 e 75.
+
+    Q2 é a mediana. Entre Q1 e Q3 está a "metade do meio" dos dados.
+    """
+    return percentil(dados, 25), percentil(dados, 50), percentil(dados, 75)
+
+
+def intervalo_interquartil(dados):
+    """IQR = Q3 − Q1: a amplitude da metade central, imune aos extremos."""
+    q1, _, q3 = quartis(dados)
+    return q3 - q1
+
+
+def limites_outliers(dados, fator=1.5):
+    """Cercas de Tukey para detecção de outliers.
+
+        limite inferior = Q1 − 1,5 · IQR
+        limite superior = Q3 + 1,5 · IQR
+
+    O fator 1,5 é convenção (com 3,0 fala-se em outlier extremo).
+    """
+    q1, _, q3 = quartis(dados)
+    iqr = q3 - q1
+    return q1 - fator * iqr, q3 + fator * iqr
+
+
+def outliers_iqr(dados, fator=1.5):
+    """Lista dos valores fora das cercas de Tukey."""
+    inferior, superior = limites_outliers(dados, fator)
+    return [x for x in dados if x < inferior or x > superior]
+
+

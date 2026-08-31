@@ -153,3 +153,47 @@ def test_coeficiente_variacao_media_zero_levanta_erro():
         ms.coeficiente_variacao([-2.0, 0.0, 2.0])
 
 
+# ---------------------------------------------------------------------------
+# 3. Posição
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("p", [0, 1, 5, 10, 25, 33.3, 50, 75, 90, 99, 100])
+def test_percentil_bate_com_numpy(p):
+    assert np.isclose(ms.percentil(DADOS, p), np.percentile(DADOS, p),
+                      rtol=RTOL_PERCENTIL)
+
+
+def test_percentil_fora_do_intervalo_levanta_erro():
+    with pytest.raises(ValueError):
+        ms.percentil(DADOS, 101)
+
+
+def test_quartis():
+    q1, q2, q3 = ms.quartis(DADOS)
+    esperados = np.percentile(DADOS, [25, 50, 75])
+    assert np.allclose([q1, q2, q3], esperados, rtol=RTOL_PERCENTIL)
+
+
+def test_q2_e_a_mediana():
+    _, q2, _ = ms.quartis(DADOS)
+    assert np.isclose(q2, ms.mediana(DADOS), rtol=RTOL_PADRAO)
+
+
+def test_intervalo_interquartil():
+    q1, q3 = np.percentile(DADOS, [25, 75])
+    assert np.isclose(ms.intervalo_interquartil(DADOS), q3 - q1,
+                      rtol=RTOL_PERCENTIL)
+
+
+def test_outliers_iqr_encontra_o_extremo_plantado():
+    base = list(DISCRETOS) + [999.0]
+    assert 999.0 in ms.outliers_iqr(base)
+
+
+def test_outliers_iqr_respeita_as_cercas_de_tukey():
+    inferior, superior = ms.limites_outliers(DADOS)
+    esperados = [x for x in DADOS if x < inferior or x > superior]
+    assert ms.outliers_iqr(DADOS) == esperados
+
+
