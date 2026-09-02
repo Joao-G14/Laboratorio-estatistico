@@ -393,7 +393,11 @@ def tabela_frequencias_continua(dados, k=None):
     classes = []
     for i in range(k):
         inferior = minimo + i * largura
-        superior = minimo + (i + 1) * largura
+        # A última fronteira é fixada no próprio máximo: calculá-la como
+        # minimo + k*largura acumula erro de ponto flutuante e pode deixar o
+        # maior valor do conjunto de fora da tabela (bug real, pego no teste
+        # test_tabela_frequencias_continua_soma_n).
+        superior = float(maximo) if i == k - 1 else minimo + (i + 1) * largura
         if i == k - 1:
             contagem = sum(1 for x in dados if inferior <= x <= superior)
         else:
