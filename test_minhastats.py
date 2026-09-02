@@ -197,3 +197,99 @@ def test_outliers_iqr_respeita_as_cercas_de_tukey():
     assert ms.outliers_iqr(DADOS) == esperados
 
 
+# ---------------------------------------------------------------------------
+# 4. Associação
+# ---------------------------------------------------------------------------
+
+
+def test_covariancia_amostral():
+    # np.cov devolve a matriz; o termo [0][1] é a covariância entre x e y.
+    assert np.isclose(ms.covariancia(X, Y), np.cov(X, Y, ddof=1)[0][1],
+                      rtol=RTOL_PADRAO)
+
+
+def test_covariancia_populacional():
+    assert np.isclose(ms.covariancia(X, Y, amostral=False),
+                      np.cov(X, Y, ddof=0)[0][1], rtol=RTOL_PADRAO)
+
+
+def test_covariancia_tamanhos_diferentes_levanta_erro():
+    with pytest.raises(ValueError):
+        ms.covariancia([1, 2, 3], [1, 2])
+
+
+def test_correlacao_pearson():
+    esperado = stats.pearsonr(X, Y).statistic
+    assert np.isclose(ms.correlacao(X, Y), esperado, rtol=RTOL_PADRAO)
+
+
+def test_correlacao_bate_com_numpy_corrcoef():
+    assert np.isclose(ms.correlacao(X, Y), np.corrcoef(X, Y)[0][1],
+                      rtol=RTOL_PADRAO)
+
+
+def test_correlacao_de_variavel_consigo_mesma_e_um():
+    assert np.isclose(ms.correlacao(X, X), 1.0, rtol=RTOL_PADRAO)
+
+
+def test_correlacao_com_variavel_constante_levanta_erro():
+    with pytest.raises(ValueError):
+        ms.correlacao([1, 2, 3, 4], [5, 5, 5, 5])
+
+
+# ---------------------------------------------------------------------------
+# 5. Forma e tabelas de frequência
+# ---------------------------------------------------------------------------
+
+
+def test_assimetria_bate_com_scipy():
+    assert np.isclose(ms.assimetria(DADOS), stats.skew(DADOS),
+                      rtol=RTOL_PADRAO)
+
+
+def test_assimetria_positiva_em_dados_com_cauda_a_direita():
+    assert ms.assimetria(DADOS) > 0
+
+
+def test_numero_classes_sturges():
+    n = len(DADOS)
+    assert ms.numero_classes_sturges(n) == math.ceil(1 + 3.322 * math.log10(n))
+
+
+def test_tabela_frequencias_continua_soma_n():
+    tabela = ms.tabela_frequencias_continua(DADOS)
+    assert sum(linha["fi"] for linha in tabela) == len(DADOS)
+
+
+def test_tabela_frequencias_continua_frequencia_relativa_soma_um():
+    tabela = ms.tabela_frequencias_continua(DADOS)
+    assert np.isclose(sum(linha["fri"] for linha in tabela), 1.0,
+                      rtol=RTOL_PADRAO)
+
+
+def test_tabela_frequencias_densidade_tem_area_um():
+    """A soma de (densidade × largura da classe) precisa valer 1.
+
+    É essa propriedade que permite sobrepor uma densidade teórica ao
+    histograma no Módulo 4 sem que as escalas briguem.
+    """
+    tabela = ms.tabela_frequencias_continua(DADOS)
+    area = sum(linha["densidade"] * (linha["superior"] - linha["inferior"])
+               for linha in tabela)
+    assert np.isclose(area, 1.0, rtol=RTOL_PADRAO)
+
+
+def test_tabela_frequencias_continua_bate_com_histograma_do_numpy():
+    k = ms.numero_classes_sturges(len(DADOS))
+    contagens_numpy, _ = np.histogram(DADOS, bins=k)
+    tabela = ms.tabela_frequencias_continua(DADOS, k)
+    assert [linha["fi"] for linha in tabela] == list(contagens_numpy)
+
+
+def test_tabela_frequencias_categorica():
+    valores = ["a", "b", "a", "c", "a", "b"]
+    tabela = ms.tabela_frequencias_categorica(valores)
+    assert tabela[0]["categoria"] == "a" and tabela[0]["fi"] == 3
+    assert np.isclose(tabela[-1]["Fri"], 1.0, rtol=RTOL_PADRAO)
+
+

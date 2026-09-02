@@ -231,3 +231,203 @@ def outliers_iqr(dados, fator=1.5):
     return [x for x in dados if x < inferior or x > superior]
 
 
+# ---------------------------------------------------------------------------
+# 4. Medidas de associação
+# ---------------------------------------------------------------------------
+
+
+def covariancia(x, y, amostral=True):
+    """Covariância entre duas variáveis.
+
+        cov(x, y) = Σ(xᵢ − x̄)(yᵢ − ȳ) / (n − 1)
+
+    Sinal positivo: desvios tendem a ocorrer no mesmo sentido.
+    O problema da covariância é a unidade (milha × dólar), que impede
+    comparar forças de associação — daí a correlação abaixo.
+    """
+    _exigir_mesmo_tamanho(x, y)
+    n = len(x)
+    _exigir_nao_vazio(x, "x")
+    if amostral and n < 2:
+        raise ValueError("covariância amostral exige n >= 2")
+    mx, my = media(x), media(y)
+    soma = 0.0
+    for i in range(n):
+        soma += (x[i] - mx) * (y[i] - my)
+    return soma / (n - 1 if amostral else n)
+
+
+def correlacao(x, y):
+    """Coeficiente de correlação linear de Pearson.
+
+        r = cov(x, y) / (s_x · s_y)
+
+    É a covariância padronizada pelos desvios, portanto adimensional e
+    sempre em [−1, +1]. Mede SOMENTE associação LINEAR: um r ≈ 0 não
+    significa "sem relação", significa "sem relação em linha reta".
+    """
+    _exigir_mesmo_tamanho(x, y)
+    sx, sy = desvio_padrao(x), desvio_padrao(y)
+    if sx == 0 or sy == 0:
+        raise ValueError(
+            "correlação indefinida: ao menos uma das variáveis é constante "
+            "(desvio padrão zero)"
+        )
+    return covariancia(x, y) / (sx * sy)
+
+
+def classificar_correlacao(r):
+    """Traduz o valor de r em força e sentido, para o texto da interface."""
+    forca = abs(r)
+    if forca < 0.1:
+        nome = "praticamente inexistente"
+    elif forca < 0.3:
+        nome = "fraca"
+    elif forca < 0.5:
+        nome = "moderada"
+    elif forca < 0.7:
+        nome = "forte"
+    elif forca < 0.9:
+        nome = "muito forte"
+    else:
+        nome = "quase perfeita"
+    if forca < 0.1:
+        return nome
+    return f"{nome} e {'positiva' if r > 0 else 'negativa'}"
+
+
+# ---------------------------------------------------------------------------
+# 5. Forma da distribuição e tabelas de frequência
+# ---------------------------------------------------------------------------
+
+
+def assimetria(dados):
+    """Coeficiente de assimetria (momento padronizado de 3ª ordem, g1).
+
+        g1 = (1/n · Σ(xᵢ − x̄)³) / σ³        (σ populacional)
+
+    g1 > 0 -> cauda longa à direita; g1 < 0 -> cauda à esquerda;
+    g1 ≈ 0 -> aproximadamente simétrica.
+    """
+    n = len(dados)
+    _exigir_nao_vazio(dados)
+    sigma = desvio_padrao(dados, amostral=False)
+    if sigma == 0:
+        raise ValueError("assimetria indefinida: variável constante")
+    m = media(dados)
+    soma_cubos = 0.0
+    for x in dados:
+        soma_cubos += (x - m) ** 3
+    return (soma_cubos / n) / (sigma ** 3)
+
+
+def interpretar_assimetria(dados):
+    """Leitura textual automática da forma, a partir de média × mediana.
+
+    Regra adotada (declarada para não parecer arbitrária): comparamos a
+    distância entre média e mediana com meio desvio padrão.
+        média − mediana >  0,5·s -> assimétrica à direita
+        média − mediana < −0,5·s -> assimétrica à esquerda
+        caso contrário           -> aproximadamente simétrica
+    """
+    m, md = media(dados), mediana(dados)
+    s = desvio_padrao(dados)
+    diferenca = m - md
+    if s == 0:
+        return "Distribuição constante: todos os valores são iguais."
+    if diferenca > 0.5 * s:
+        return (
+            f"Assimetria à DIREITA: a média ({m:.2f}) está bem acima da "
+            f"mediana ({md:.2f}). Uma minoria de valores altos puxa a média "
+            "para cima, então a mediana descreve melhor o caso típico."
+        )
+    if diferenca < -0.5 * s:
+        return (
+            f"Assimetria à ESQUERDA: a média ({m:.2f}) está bem abaixo da "
+            f"mediana ({md:.2f}). Valores baixos extremos puxam a média."
+        )
+    return (
+        f"Distribuição aproximadamente SIMÉTRICA: média ({m:.2f}) e mediana "
+        f"({md:.2f}) estão a menos de meio desvio padrão uma da outra."
+    )
+
+
+def numero_classes_sturges(n):
+    """Número de classes de um histograma pela regra de Sturges.
+
+        k = 1 + 3,322 · log₁₀(n)     (arredondado para cima)
+    """
+    if n <= 0:
+        raise ValueError("n deve ser positivo")
+    if n == 1:
+        return 1
+    return int(math.ceil(1 + 3.322 * math.log10(n)))
+
+
+def tabela_frequencias_continua(dados, k=None):
+    """Tabela de frequências em classes para variáveis contínuas.
+
+    Devolve uma lista de dicionários com, para cada classe:
+        inferior, superior, ponto_medio, fi (absoluta), fri (relativa),
+        Fi (acumulada), Fri (acumulada relativa), densidade.
+
+    `densidade` = fri / largura da classe. É a altura que faz a ÁREA total do
+    histograma valer 1 — a escala em que uma densidade teórica (Normal,
+    Exponencial...) pode ser sobreposta aos dados, no Módulo 4.
+
+    A última classe é fechada à direita para que o valor máximo caia dentro
+    dela ([a, b) nas demais, [a, b] na última).
+    """
+    _exigir_nao_vazio(dados)
+    n = len(dados)
+    if k is None:
+        k = numero_classes_sturges(n)
+    minimo, maximo = min(dados), max(dados)
+    if minimo == maximo:                # variável constante: uma única classe
+        return [{
+            "inferior": float(minimo), "superior": float(maximo),
+            "ponto_medio": float(minimo), "fi": n, "fri": 1.0,
+            "Fi": n, "Fri": 1.0, "densidade": 0.0,
+        }]
+    largura = (maximo - minimo) / k
+    classes = []
+    for i in range(k):
+        inferior = minimo + i * largura
+        superior = minimo + (i + 1) * largura
+        if i == k - 1:
+            contagem = sum(1 for x in dados if inferior <= x <= superior)
+        else:
+            contagem = sum(1 for x in dados if inferior <= x < superior)
+        largura_real = superior - inferior
+        classes.append({
+            "inferior": inferior,
+            "superior": superior,
+            "ponto_medio": (inferior + superior) / 2,
+            "fi": contagem,
+            "fri": contagem / n,
+            "densidade": (contagem / n) / largura_real if largura_real else 0.0,
+        })
+    acumulada = 0
+    for classe in classes:
+        acumulada += classe["fi"]
+        classe["Fi"] = acumulada
+        classe["Fri"] = acumulada / n
+    return classes
+
+
+def tabela_frequencias_categorica(valores):
+    """Tabela de frequências para variáveis categóricas, da maior à menor."""
+    _exigir_nao_vazio(valores)
+    n = len(valores)
+    contagem = contar_frequencias(valores)
+    itens = sorted(contagem.items(), key=lambda par: (-par[1], str(par[0])))
+    linhas, acumulada = [], 0
+    for categoria, fi in itens:
+        acumulada += fi
+        linhas.append({
+            "categoria": categoria, "fi": fi, "fri": fi / n,
+            "Fi": acumulada, "Fri": acumulada / n,
+        })
+    return linhas
+
+
