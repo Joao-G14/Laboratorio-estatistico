@@ -293,3 +293,146 @@ def test_tabela_frequencias_categorica():
     assert np.isclose(tabela[-1]["Fri"], 1.0, rtol=RTOL_PADRAO)
 
 
+# ---------------------------------------------------------------------------
+# 6. Regressão linear
+# ---------------------------------------------------------------------------
+
+
+def test_regressao_coeficientes_batem_com_scipy():
+    b0, b1, _ = ms.regressao_linear(X, Y)
+    referencia = stats.linregress(X, Y)
+    assert np.isclose(b1, referencia.slope, rtol=RTOL_PADRAO)
+    assert np.isclose(b0, referencia.intercept, rtol=RTOL_PADRAO)
+
+
+def test_regressao_r2_bate_com_scipy():
+    _, _, r2 = ms.regressao_linear(X, Y)
+    referencia = stats.linregress(X, Y)
+    assert np.isclose(r2, referencia.rvalue ** 2, rtol=RTOL_PADRAO)
+
+
+def test_regressao_coeficientes_batem_com_polyfit():
+    b0, b1, _ = ms.regressao_linear(X, Y)
+    coef_numpy = np.polyfit(X, Y, 1)
+    assert np.allclose([b1, b0], coef_numpy, rtol=1e-8)
+
+
+def test_r2_e_o_quadrado_da_correlacao_na_regressao_simples():
+    # Identidade da regressão simples: R² = r². Bom teste de consistência.
+    _, _, r2 = ms.regressao_linear(X, Y)
+    r = ms.correlacao(X, Y)
+    assert np.isclose(r2, r ** 2, rtol=RTOL_PADRAO)
+
+
+def test_prever_reproduz_a_reta():
+    b0, b1, _ = ms.regressao_linear(X, Y)
+    assert np.isclose(ms.prever(b0, b1, 5.0), b0 + b1 * 5.0, rtol=RTOL_PADRAO)
+
+
+def test_regressao_com_x_constante_levanta_erro():
+    with pytest.raises(ValueError):
+        ms.regressao_linear([2, 2, 2, 2], [1, 2, 3, 4])
+
+
+def test_erro_padrao_estimativa_bate_com_residuos_do_numpy():
+    b0, b1, _ = ms.regressao_linear(X, Y)
+    residuos = np.array(Y) - (b0 + b1 * np.array(X))
+    esperado = np.sqrt(np.sum(residuos ** 2) / (len(X) - 2))
+    assert np.isclose(ms.erro_padrao_estimativa(X, Y), esperado,
+                      rtol=RTOL_PADRAO)
+
+
+# ---------------------------------------------------------------------------
+# 7. Distribuições teóricas
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("x", [-3.0, -0.5, 0.0, 1.25, 4.0, 9.9])
+def test_densidade_normal(x):
+    assert np.isclose(ms.densidade_normal(x, 2.0, 1.7),
+                      stats.norm.pdf(x, loc=2.0, scale=1.7),
+                      rtol=RTOL_DISTRIBUICAO)
+
+
+@pytest.mark.parametrize("x", [0.0, 0.5, 2.0, 7.5])
+def test_densidade_exponencial(x):
+    lam = 0.4
+    assert np.isclose(ms.densidade_exponencial(x, lam),
+                      stats.expon.pdf(x, scale=1 / lam),
+                      rtol=RTOL_DISTRIBUICAO)
+
+
+@pytest.mark.parametrize("x", [-1.0, 0.0, 2.5, 5.0, 6.0])
+def test_densidade_uniforme(x):
+    a, b = 0.0, 5.0
+    assert np.isclose(ms.densidade_uniforme(x, a, b),
+                      stats.uniform.pdf(x, loc=a, scale=b - a),
+                      rtol=RTOL_DISTRIBUICAO)
+
+
+@pytest.mark.parametrize("k", [0, 1, 2, 3, 5, 10])
+def test_probabilidade_poisson(k):
+    lam = 1.54
+    assert np.isclose(ms.probabilidade_poisson(k, lam),
+                      stats.poisson.pmf(k, lam), rtol=RTOL_DISTRIBUICAO)
+
+
+def test_poisson_soma_das_probabilidades_tende_a_um():
+    lam = 1.54
+    total = sum(ms.probabilidade_poisson(k, lam) for k in range(0, 40))
+    assert np.isclose(total, 1.0, rtol=1e-9)
+
+
+@pytest.mark.parametrize("k", [0, 1, 4, 7, 10])
+def test_probabilidade_binomial(k):
+    n, p = 10, 0.37
+    assert np.isclose(ms.probabilidade_binomial(k, n, p),
+                      stats.binom.pmf(k, n, p), rtol=RTOL_DISTRIBUICAO)
+
+
+def test_binomial_soma_das_probabilidades_e_um():
+    n, p = 10, 0.37
+    total = sum(ms.probabilidade_binomial(k, n, p) for k in range(n + 1))
+    assert np.isclose(total, 1.0, rtol=1e-12)
+
+
+def test_binomial_com_p_zero():
+    assert ms.probabilidade_binomial(0, 5, 0.0) == 1.0
+    assert ms.probabilidade_binomial(1, 5, 0.0) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# 8. Resumo descritivo e regra de ouro
+# ---------------------------------------------------------------------------
+
+
+def test_resumo_descritivo_traz_todas_as_chaves():
+    resumo = ms.resumo_descritivo(DADOS)
+    esperadas = {"n", "media", "mediana", "moda", "minimo", "maximo",
+                 "amplitude", "variancia_amostral", "variancia_populacional",
+                 "desvio_amostral", "desvio_populacional", "q1", "q2", "q3",
+                 "iqr", "limite_inferior", "limite_superior", "n_outliers",
+                 "pct_outliers", "cv", "assimetria", "interpretacao"}
+    assert esperadas.issubset(resumo.keys())
+
+
+def test_resumo_descritivo_concorda_com_as_funcoes_isoladas():
+    resumo = ms.resumo_descritivo(DADOS)
+    assert np.isclose(resumo["media"], np.mean(DADOS), rtol=RTOL_PADRAO)
+    assert np.isclose(resumo["desvio_amostral"], np.std(DADOS, ddof=1),
+                      rtol=RTOL_PADRAO)
+
+
+def test_regra_de_ouro_o_nucleo_nao_importa_biblioteca_estatistica():
+    """O núcleo não pode depender de NumPy, SciPy, statistics ou pandas.
+
+    Este teste lê o próprio código-fonte de minhastats.py. Se alguém um dia
+    "resolver" um bug importando np.mean, o teste quebra — que é exatamente
+    o objetivo do trabalho.
+    """
+    with open("minhastats.py", encoding="utf-8") as arquivo:
+        codigo = arquivo.read()
+    for proibido in ("import numpy", "import scipy", "import statistics",
+                     "import pandas", "from numpy", "from scipy",
+                     "from statistics", "from pandas"):
+        assert proibido not in codigo, f"minhastats.py não pode conter '{proibido}'"

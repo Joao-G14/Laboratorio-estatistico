@@ -435,3 +435,187 @@ def tabela_frequencias_categorica(valores):
     return linhas
 
 
+# ---------------------------------------------------------------------------
+# 6. Regressão linear simples (mínimos quadrados)
+# ---------------------------------------------------------------------------
+
+
+def regressao_linear(x, y):
+    """Ajusta ŷ = b₀ + b₁·x pelo método dos mínimos quadrados.
+
+        b₁ = Σ(xᵢ − x̄)(yᵢ − ȳ) / Σ(xᵢ − x̄)²   ( = cov(x,y) / var(x) )
+        b₀ = ȳ − b₁·x̄
+        R² = 1 − SQ_res/SQ_tot = 1 − Σ(yᵢ − ŷᵢ)² / Σ(yᵢ − ȳ)²
+
+    b₁ é a inclinação que minimiza a soma dos quadrados dos resíduos;
+    b₀ garante que a reta passe pelo ponto médio (x̄, ȳ).
+    R² é a fração da variação de y que a reta consegue explicar.
+
+    Retorna (b0, b1, r2).
+    """
+    _exigir_mesmo_tamanho(x, y)
+    n = len(x)
+    if n < 2:
+        raise ValueError("regressão exige ao menos 2 pontos")
+    mx, my = media(x), media(y)
+    numerador = 0.0
+    denominador = 0.0
+    for i in range(n):
+        numerador += (x[i] - mx) * (y[i] - my)
+        denominador += (x[i] - mx) ** 2
+    if denominador == 0:
+        raise ValueError("regressão indefinida: x é constante (reta vertical)")
+    b1 = numerador / denominador
+    b0 = my - b1 * mx
+
+    soma_residuos = 0.0
+    soma_total = 0.0
+    for i in range(n):
+        previsto = b0 + b1 * x[i]
+        soma_residuos += (y[i] - previsto) ** 2
+        soma_total += (y[i] - my) ** 2
+    if soma_total == 0:
+        raise ValueError("R² indefinido: y é constante")
+    r2 = 1 - soma_residuos / soma_total
+    return b0, b1, r2
+
+
+def prever(b0, b1, x):
+    """Valor previsto pela reta: ŷ = b₀ + b₁·x."""
+    return b0 + b1 * x
+
+
+def erro_padrao_estimativa(x, y):
+    """Erro padrão da estimativa — o "desvio padrão dos resíduos".
+
+        s_e = √( Σ(yᵢ − ŷᵢ)² / (n − 2) )
+
+    Dá a ordem de grandeza do erro típico de uma predição, na unidade de y.
+    Perde-se 2 graus de liberdade porque b₀ e b₁ vieram dos próprios dados.
+    """
+    _exigir_mesmo_tamanho(x, y)
+    n = len(x)
+    if n < 3:
+        raise ValueError("erro padrão da estimativa exige n >= 3")
+    b0, b1, _ = regressao_linear(x, y)
+    soma_residuos = 0.0
+    for i in range(n):
+        soma_residuos += (y[i] - prever(b0, b1, x[i])) ** 2
+    return math.sqrt(soma_residuos / (n - 2))
+
+
+# ---------------------------------------------------------------------------
+# 7. Distribuições teóricas (implementadas à mão, para o Módulo 4)
+# ---------------------------------------------------------------------------
+
+
+def densidade_normal(x, mu, sigma):
+    """Densidade da Normal(μ, σ):
+
+        f(x) = 1/(σ√(2π)) · e^(−½·((x−μ)/σ)²)
+    """
+    if sigma <= 0:
+        raise ValueError("sigma deve ser positivo")
+    z = (x - mu) / sigma
+    return math.exp(-0.5 * z * z) / (sigma * math.sqrt(2 * math.pi))
+
+
+def densidade_exponencial(x, lam):
+    """Densidade da Exponencial(λ):  f(x) = λ·e^(−λx), x ≥ 0.
+
+    Estimador de momentos a partir dos dados: λ̂ = 1 / x̄.
+    """
+    if lam <= 0:
+        raise ValueError("lambda deve ser positivo")
+    if x < 0:
+        return 0.0
+    return lam * math.exp(-lam * x)
+
+
+def densidade_uniforme(x, a, b):
+    """Densidade da Uniforme(a, b):  f(x) = 1/(b−a) dentro de [a, b]."""
+    if b <= a:
+        raise ValueError("b deve ser maior que a")
+    return 1.0 / (b - a) if a <= x <= b else 0.0
+
+
+def probabilidade_poisson(k, lam):
+    """P(X = k) da Poisson(λ):  e^(−λ)·λ^k / k!
+
+    Calculada em escala logarítmica (lgamma no lugar do fatorial) para não
+    estourar o float com λ ou k grandes. Estimador: λ̂ = x̄.
+    """
+    if lam <= 0:
+        raise ValueError("lambda deve ser positivo")
+    if k < 0 or int(k) != k:
+        return 0.0
+    k = int(k)
+    log_p = -lam + k * math.log(lam) - math.lgamma(k + 1)
+    return math.exp(log_p)
+
+
+def probabilidade_binomial(k, n, p):
+    """P(X = k) da Binomial(n, p):  C(n,k)·p^k·(1−p)^(n−k)
+
+    Também em escala logarítmica, com os casos p = 0 e p = 1 tratados
+    à parte (log(0) não existe).
+    """
+    if not 0 <= p <= 1:
+        raise ValueError("p deve estar entre 0 e 1")
+    if n < 0 or int(n) != n:
+        raise ValueError("n deve ser inteiro não negativo")
+    k, n = int(k), int(n)
+    if k < 0 or k > n:
+        return 0.0
+    if p == 0:
+        return 1.0 if k == 0 else 0.0
+    if p == 1:
+        return 1.0 if k == n else 0.0
+    log_binomio = (math.lgamma(n + 1) - math.lgamma(k + 1)
+                   - math.lgamma(n - k + 1))
+    log_p = log_binomio + k * math.log(p) + (n - k) * math.log(1 - p)
+    return math.exp(log_p)
+
+
+# ---------------------------------------------------------------------------
+# 8. Resumo pronto para a interface
+# ---------------------------------------------------------------------------
+
+
+def resumo_descritivo(dados):
+    """Todas as medidas de uma variável numérica em um único dicionário.
+
+    É o que o Módulo 2 exibe. Cada valor aqui vem das funções acima —
+    nenhum número da tela passa por NumPy.
+    """
+    _exigir_nao_vazio(dados)
+    q1, q2, q3 = quartis(dados)
+    inferior, superior = limites_outliers(dados)
+    fora = outliers_iqr(dados)
+    resumo = {
+        "n": len(dados),
+        "media": media(dados),
+        "mediana": mediana(dados),
+        "moda": moda(dados),
+        "minimo": float(min(dados)),
+        "maximo": float(max(dados)),
+        "amplitude": amplitude(dados),
+        "variancia_amostral": variancia(dados, amostral=True),
+        "variancia_populacional": variancia(dados, amostral=False),
+        "desvio_amostral": desvio_padrao(dados, amostral=True),
+        "desvio_populacional": desvio_padrao(dados, amostral=False),
+        "q1": q1, "q2": q2, "q3": q3, "iqr": q3 - q1,
+        "limite_inferior": inferior, "limite_superior": superior,
+        "n_outliers": len(fora),
+        "pct_outliers": 100 * len(fora) / len(dados),
+        "interpretacao": interpretar_assimetria(dados),
+    }
+    try:
+        resumo["cv"] = coeficiente_variacao(dados)
+    except ValueError:
+        resumo["cv"] = None             # média zero
+    try:
+        resumo["assimetria"] = assimetria(dados)
+    except ValueError:
+        resumo["assimetria"] = None     # variável constante
+    return resumo
