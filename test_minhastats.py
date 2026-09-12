@@ -251,6 +251,33 @@ def test_assimetria_positiva_em_dados_com_cauda_a_direita():
     assert ms.assimetria(DADOS) > 0
 
 
+def test_assimetria_pearson():
+    esperado = 3 * (np.mean(DADOS) - np.median(DADOS)) / np.std(DADOS, ddof=1)
+    assert np.isclose(ms.assimetria_pearson(DADOS), esperado,
+                      rtol=RTOL_PADRAO)
+
+
+def test_interpretacao_detecta_cauda_a_direita():
+    # DADOS vem de uma gama: cauda longa à direita, g1 bem acima de 1.
+    texto = ms.interpretar_assimetria(DADOS)
+    assert "DIREITA" in texto and "ASSIMÉTRICA" in texto
+
+
+def test_interpretacao_detecta_cauda_a_esquerda():
+    espelhados = [-x for x in DADOS]
+    texto = ms.interpretar_assimetria(espelhados)
+    assert "ESQUERDA" in texto and "ASSIMÉTRICA" in texto
+
+
+def test_interpretacao_detecta_simetria():
+    simetricos = RNG.normal(100, 15, size=3000).tolist()
+    assert "SIMÉTRICA" in ms.interpretar_assimetria(simetricos)
+
+
+def test_interpretacao_de_variavel_constante():
+    assert "constante" in ms.interpretar_assimetria([5.0] * 10)
+
+
 def test_numero_classes_sturges():
     n = len(DADOS)
     assert ms.numero_classes_sturges(n) == math.ceil(1 + 3.322 * math.log10(n))

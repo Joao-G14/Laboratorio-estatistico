@@ -321,34 +321,79 @@ def assimetria(dados):
     return (soma_cubos / n) / (sigma ** 3)
 
 
-def interpretar_assimetria(dados):
-    """Leitura textual automática da forma, a partir de média × mediana.
+def assimetria_pearson(dados):
+    """Segundo coeficiente de assimetria de Pearson.
 
-    Regra adotada (declarada para não parecer arbitrária): comparamos a
-    distância entre média e mediana com meio desvio padrão.
-        média − mediana >  0,5·s -> assimétrica à direita
-        média − mediana < −0,5·s -> assimétrica à esquerda
-        caso contrário           -> aproximadamente simétrica
+        Sk = 3·(média − mediana) / s
+
+    É a versão padronizada da distância entre média e mediana: o fator 3
+    e a divisão pelo desvio tornam o número adimensional e comparável
+    entre variáveis de escalas diferentes.
     """
-    m, md = media(dados), mediana(dados)
     s = desvio_padrao(dados)
-    diferenca = m - md
+    if s == 0:
+        raise ValueError("assimetria de Pearson indefinida: variável constante")
+    return 3 * (media(dados) - mediana(dados)) / s
+
+
+def interpretar_assimetria(dados):
+    """Leitura textual automática da forma da distribuição.
+
+    REGRA ADOTADA (declarada para não parecer arbitrária). O critério
+    principal é o coeficiente de momento g1, com os cortes usuais:
+
+        |g1| < 0,5        -> aproximadamente simétrica
+        0,5 <= |g1| < 1   -> assimetria moderada
+        |g1| >= 1         -> assimetria forte
+
+    e o sinal de g1 dá o lado da cauda.
+
+    Por que g1, e não a comparação "média − mediana > meio desvio padrão"?
+    Porque essa segunda regra FALHA justamente nos casos que interessam.
+    Em distribuição de cauda pesada, a própria cauda infla o desvio
+    padrão, de modo que meio desvio vira um limiar enorme e a regra
+    devolve "simétrica" para dados visivelmente tortos. No nosso dataset
+    ela classificaria as SETE variáveis numéricas como simétricas, embora
+    todas tenham g1 > 2. O texto abaixo continua reportando média ×
+    mediana, que é a leitura intuitiva, mas quem decide é g1.
+    """
+    s = desvio_padrao(dados)
     if s == 0:
         return "Distribuição constante: todos os valores são iguais."
-    if diferenca > 0.5 * s:
+
+    m, md = media(dados), mediana(dados)
+    g1 = assimetria(dados)
+    sk = assimetria_pearson(dados)
+    força = abs(g1)
+    if força < 0.5:
+        intensidade = "aproximadamente SIMÉTRICA"
+    elif força < 1:
+        intensidade = "moderadamente ASSIMÉTRICA"
+    else:
+        intensidade = "fortemente ASSIMÉTRICA"
+
+    if força < 0.5:
         return (
-            f"Assimetria à DIREITA: a média ({m:.2f}) está bem acima da "
-            f"mediana ({md:.2f}). Uma minoria de valores altos puxa a média "
-            "para cima, então a mediana descreve melhor o caso típico."
+            f"Distribuição {intensidade} (g₁ = {g1:.2f}): média ({m:.2f}) e "
+            f"mediana ({md:.2f}) descrevem o mesmo centro, e qualquer uma "
+            "das duas serve para resumir a variável."
         )
-    if diferenca < -0.5 * s:
-        return (
-            f"Assimetria à ESQUERDA: a média ({m:.2f}) está bem abaixo da "
-            f"mediana ({md:.2f}). Valores baixos extremos puxam a média."
+    lado = "DIREITA" if g1 > 0 else "ESQUERDA"
+    if g1 > 0:
+        efeito = (
+            f"A média ({m:.2f}) está acima da mediana ({md:.2f}): uma "
+            "minoria de valores altos puxa a média para cima, então a "
+            "MEDIANA descreve melhor o caso típico."
+        )
+    else:
+        efeito = (
+            f"A média ({m:.2f}) está abaixo da mediana ({md:.2f}): valores "
+            "baixos extremos puxam a média para baixo, então a MEDIANA "
+            "descreve melhor o caso típico."
         )
     return (
-        f"Distribuição aproximadamente SIMÉTRICA: média ({m:.2f}) e mediana "
-        f"({md:.2f}) estão a menos de meio desvio padrão uma da outra."
+        f"Distribuição {intensidade} à {lado} (g₁ = {g1:.2f}; coeficiente "
+        f"de Pearson Sk = {sk:.2f}). {efeito}"
     )
 
 
