@@ -1,0 +1,173 @@
+{
+  "linhas": [
+    {
+      "funcao": "media(total)",
+      "nosso": 18.518728800374422,
+      "referencia": 18.518728800373427,
+      "diferenca": 9.947598300641403e-13,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "mediana(total)",
+      "nosso": 14.16,
+      "referencia": 14.16,
+      "diferenca": 0.0,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "amplitude(total)",
+      "nosso": 173.51999999999998,
+      "referencia": 173.51999999999998,
+      "diferenca": 0.0,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "variancia(total, amostral=True)",
+      "nosso": 190.48673129696488,
+      "referencia": 190.4867312969653,
+      "diferenca": 4.263256414560601e-13,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "variancia(total, amostral=False)",
+      "nosso": 190.45709278268185,
+      "referencia": 190.4570927826823,
+      "diferenca": 4.547473508864641e-13,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "desvio_padrao(total, amostral=True)",
+      "nosso": 13.80169305907666,
+      "referencia": 13.801693059076676,
+      "diferenca": 1.5987211554602254e-14,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "desvio_padrao(total, amostral=False)",
+      "nosso": 13.80061928982471,
+      "referencia": 13.800619289824725,
+      "diferenca": 1.5987211554602254e-14,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "coeficiente_variacao(total)",
+      "nosso": 74.5282962337977,
+      "referencia": 74.5282962338018,
+      "diferenca": 4.092726157978177e-12,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "percentil(total, 25)",
+      "nosso": 10.8,
+      "referencia": 10.8,
+      "diferenca": 0.0,
+      "tolerancia": "1e-6"
+    },
+    {
+      "funcao": "percentil(total, 50)",
+      "nosso": 14.16,
+      "referencia": 14.16,
+      "diferenca": 0.0,
+      "tolerancia": "1e-6"
+    },
+    {
+      "funcao": "percentil(total, 75)",
+      "nosso": 20.3,
+      "referencia": 20.3,
+      "diferenca": 0.0,
+      "tolerancia": "1e-6"
+    },
+    {
+      "funcao": "percentil(total, 90)",
+      "nosso": 33.36,
+      "referencia": 33.36,
+      "diferenca": 0.0,
+      "tolerancia": "1e-6"
+    },
+    {
+      "funcao": "assimetria(total)",
+      "nosso": 3.096167572699238,
+      "referencia": 3.0961675726994256,
+      "diferenca": 1.8740564655672642e-13,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "covariancia(distancia, tarifa)",
+      "nosso": 40.73530512522273,
+      "referencia": 40.73530512522282,
+      "diferenca": 9.237055564881302e-14,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "correlacao(distancia, tarifa)",
+      "nosso": 0.922659025484144,
+      "referencia": 0.9226590254841393,
+      "diferenca": 4.773959005888173e-15,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "correlacao(passageiros, tarifa)",
+      "nosso": 0.007799481371013502,
+      "referencia": 0.00779948137101378,
+      "diferenca": 2.7842311789427754e-16,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "regressao_linear -> b1",
+      "nosso": 2.7791067492217345,
+      "referencia": 2.7791067492217283,
+      "diferenca": 6.217248937900877e-15,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "regressao_linear -> b0",
+      "nosso": 4.673765287375643,
+      "referencia": 4.67376528737562,
+      "diferenca": 2.3092638912203256e-14,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "regressao_linear -> R²",
+      "nosso": 0.8512996773073407,
+      "referencia": 0.8512996773073397,
+      "diferenca": 9.992007221626409e-16,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "erro_padrao_estimativa(dist, tarifa)",
+      "nosso": 4.447199549477758,
+      "referencia": 4.447199549477769,
+      "diferenca": 1.1546319456101628e-14,
+      "tolerancia": "1e-9"
+    },
+    {
+      "funcao": "densidade_normal(20; media; desvio)",
+      "nosso": 0.028739316924549826,
+      "referencia": 0.028739316924549826,
+      "diferenca": 0.0,
+      "tolerancia": "1e-10"
+    },
+    {
+      "funcao": "densidade_exponencial(5; 1/media)",
+      "nosso": 0.06333750256396221,
+      "referencia": 0.06333750256396223,
+      "diferenca": 1.3877787807814457e-17,
+      "tolerancia": "1e-10"
+    },
+    {
+      "funcao": "probabilidade_poisson(1; lambda)",
+      "nosso": 0.3301753528333774,
+      "referencia": 0.3301753528333774,
+      "diferenca": 0.0,
+      "tolerancia": "1e-10"
+    },
+    {
+      "funcao": "probabilidade_binomial(3; 10; 0,3)",
+      "nosso": 0.26682793199999943,
+      "referencia": 0.2668279319999998,
+      "diferenca": 3.885780586188048e-16,
+      "tolerancia": "1e-10"
+    }
+  ],
+  "maior_diferenca": 4.092726157978177e-12
+}
