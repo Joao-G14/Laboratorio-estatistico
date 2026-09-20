@@ -1,0 +1,13 @@
+# Finais de linha: o repositório é escrito no Windows, mas vai ser clonado
+# e corrigido em Linux ou macOS. Sem isto, o CRLF do Windows vaza para o
+# repositório e aparece como arquivo inteiro modificado para quem clona.
+* text=auto eol=lf
+
+# Binários: nunca converter.
+*.png binary
+*.pdf binary
+
+# O dataset fica byte a byte como veio da fonte. Dado de pesquisa não se
+# normaliza: se o arquivo mudar, os números do relatório deixam de ser
+# reproduzíveis a partir dele.
+dados/dataset.csv -text
