@@ -20,3 +20,12 @@ Thumbs.db
 
 # O dataset e as figuras SÃO versionados de propósito:
 # sem eles o projeto não é reprodutível por quem clona o repositório.
+
+# Vídeo da apresentação: fica FORA do repositório.
+# O GitHub recusa qualquer arquivo acima de 100 MB, e o que a entrega
+# pede é o LINK do vídeo, não o arquivo. O link está no PDF e no README.
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm

@@ -251,6 +251,9 @@ def montar_capa(estilos):
         Paragraph(f"<b>{identificacao.DISCIPLINA}</b>", estilos["corpo"]),
         Paragraph(identificacao.PROFESSOR, estilos["corpo"]),
         Spacer(1, 0.5 * cm),
+        Paragraph(f"<b>Grupo:</b> {identificacao.NOME_GRUPO} "
+                  f"(entrega individual)", estilos["corpo"]),
+        Spacer(1, 0.2 * cm),
         Paragraph("<b>Integrante(s)</b>", estilos["h3"]),
         Paragraph(integrantes, estilos["corpo"]),
         Spacer(1, 0.7 * cm),
@@ -1330,6 +1333,8 @@ def secao_reprodutibilidade_e_video(estilos):
         for nome, matricula in identificacao.INTEGRANTES)
     itens += [
         Spacer(1, 0.7 * cm),
+        Paragraph(f"<b>Grupo:</b> {identificacao.NOME_GRUPO} "
+                  f"(entrega individual)", estilos["corpo"]),
         Paragraph("<b>Integrante(s)</b>", estilos["h3"]),
         Paragraph(integrantes, estilos["corpo"]),
     ]
