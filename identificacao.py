@@ -6,7 +6,8 @@ aqui, em um lugar só. O gerador do PDF lê deste arquivo; assim, quando o
 vídeo ficar pronto, basta preencher LINK_VIDEO e rodar
 `python gerar_pdf.py` de novo.
 
->>> PREENCHER ANTES DE ENTREGAR: LINK_VIDEO. <<<
+>>> Tudo preenchido. Se algum link mudar, troque aqui e rode
+>>> `python gerar_pdf.py` de novo. <<<
 """
 
 import unicodedata
@@ -36,7 +37,7 @@ LINK_DATASET_ARQUIVO = (
 )
 
 # Vídeo de 3 a 5 minutos (YouTube não listado ou Drive com acesso liberado).
-LINK_VIDEO = "[PREENCHER: LINK DO VÍDEO]"
+LINK_VIDEO = "https://youtu.be/L7YlqPDYn0U"
 
 
 def pendencias():

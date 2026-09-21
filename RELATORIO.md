@@ -9,7 +9,7 @@
 | João Gabriel Amaral de Sales | 72650411 |
 
 **Repositório:** https://github.com/Joao-G14/Laboratorio-estatistico
-**Vídeo (3–5 min):** *[PREENCHER: LINK DO VÍDEO]*
+**Vídeo (3–5 min):** https://youtu.be/L7YlqPDYn0U
 
 ---
 
